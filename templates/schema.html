@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <h2 class="mb-4">Generated Content Schema</h2>
+        
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Drupal 11 Content Type Schema</span>
+                <button class="btn btn-sm btn-secondary" onclick="copySchema()">Copy to Clipboard</button>
+            </div>
+            <div class="card-body">
+                <pre id="schemaContent" class="bg-light p-3 rounded"><code>{{ schema }}</code></pre>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <a href="/scrape" class="btn btn-primary">Back to Scraper</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function copySchema() {
+    const schemaText = document.getElementById('schemaContent').textContent;
+    navigator.clipboard.writeText(schemaText).then(() => {
+        alert('Schema copied to clipboard!');
+    }).catch(err => {
+        console.error('Failed to copy schema:', err);
+        alert('Failed to copy schema');
+    });
+}
+</script>
+{% endblock %} 

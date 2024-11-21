@@ -88,3 +88,4 @@ coverage/
 .npm/
 .eslintcache 
 __pycache__/
+*.pyc

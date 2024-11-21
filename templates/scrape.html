@@ -25,11 +25,17 @@
         <div class="card mb-4">
             <div class="card-header">
                 Table {{ index }}
-                <form method="post" action="{{ url_for('extract_table') }}" class="float-end">
-                    <input type="hidden" name="url" value="{{ url }}">
-                    <input type="hidden" name="table_index" value="{{ index }}">
-                    <button type="submit" class="btn btn-sm btn-success">Download CSV</button>
-                </form>
+                <div class="float-end">
+                    <form method="post" action="{{ url_for('extract_table') }}" class="d-inline">
+                        <input type="hidden" name="url" value="{{ url }}">
+                        <input type="hidden" name="table_index" value="{{ index }}">
+                        <button type="submit" class="btn btn-sm btn-success">Download CSV</button>
+                    </form>
+                    <form method="post" action="{{ url_for('generate_schema') }}" class="d-inline">
+                        <input type="hidden" name="table_html" value="{{ original_tables[index] | safe }}">
+                        <button type="submit" class="btn btn-sm btn-primary">Generate Schema</button>
+                    </form>
+                </div>
             </div>
             <div class="card-body">
                 {{ table | safe }}

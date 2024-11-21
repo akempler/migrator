@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import pandas as pd
 from bs4 import BeautifulSoup
 import time
@@ -7,8 +7,20 @@ import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import openai
+import json
+import os
+from dotenv import load_dotenv
 
 app = Flask(__name__)
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Set your OpenAI API key
+openai.api_key = os.getenv('OPENAI_API_KEY')
+if not openai.api_key:
+    raise ValueError("No OpenAI API key found. Please set OPENAI_API_KEY in your .env file.")
 
 def get_driver():
     try:
@@ -75,6 +87,129 @@ def html_table_to_dataframe(table):
     df = pd.DataFrame(rows, columns=headers)
     return df
 
+def generate_schema_from_table(table_html):
+    try:
+        # Parse the table HTML and extract text content
+        soup = BeautifulSoup(table_html, 'lxml')
+        
+        # Debug print to see what we're working with
+        #print(f"Raw table HTML received: {table_html[:500]}")
+        
+        # Extract headers and data from the table
+        headers = []
+        data = []
+        
+        # Try multiple methods to find headers
+        # First try finding th elements
+        header_cells = soup.find_all('th')
+        if header_cells:
+            headers = [th.get_text(strip=True) for th in header_cells]
+        else:
+            # If no th elements, try the first row
+            first_row = soup.find('tr')
+            if first_row:
+                headers = [td.get_text(strip=True) for td in first_row.find_all('td')]
+        
+        # Get data rows
+        rows = soup.find_all('tr')
+        for row in rows[1:]:  # Skip the first row as it's headers
+            cells = row.find_all('td')
+            if cells:
+                row_data = []
+                for cell in cells:
+                    # Get all text content, including from nested elements
+                    text_content = ' '.join(cell.stripped_strings)
+                    row_data.append(text_content)
+                if row_data:
+                    data.append(row_data)
+        
+        print(f"Extracted headers: {headers}")
+        print(f"Sample data rows: {data[:2]}")
+        
+        # Create a structured representation of the table
+        table_structure = {
+            "content_type_name": "table_content",
+            "fields": []
+        }
+        
+        # Create field definitions based on headers and data
+        for i, header in enumerate(headers):
+            field = {
+                "field_name": header.lower().replace(' ', '_'),
+                "field_label": header,
+                "field_type": "string",  # Default type
+                "required": True,
+                "sample_values": [row[i] for row in data[:3] if i < len(row)]
+            }
+            
+            # Try to determine field type from sample data
+            sample_values = field["sample_values"]
+            if sample_values:
+                if all(val.isdigit() for val in sample_values):
+                    field["field_type"] = "integer"
+                elif all(val.replace('.', '').isdigit() for val in sample_values):
+                    field["field_type"] = "decimal"
+                elif all(len(val) > 100 for val in sample_values):
+                    field["field_type"] = "text_long"
+                elif any('<a href' in val.lower() for val in sample_values):
+                    field["field_type"] = "link"
+            
+            table_structure["fields"].append(field)
+        
+        # Convert to JSON for the prompt
+        table_json = json.dumps(table_structure, indent=2)
+        
+        # Clean and escape the HTML table string
+        cleaned_table_html = table_html.replace('\n', ' ').replace('\r', '').strip()
+        
+        prompt = f"""Generate a Drupal 11 content type schema based on this HTML table:
+
+        ```html
+        {cleaned_table_html}
+        ```
+
+        Create a complete Drupal content type configuration that includes:
+        1. Machine names for fields (lowercase with underscores)
+        2. Appropriate field types (text, long text, integer, decimal, link, etc.)
+        3. Required field settings
+        4. Field widget settings
+        5. Display settings
+
+        Return the schema as valid JSON that could be used for content type configuration.
+        Include field descriptions based on the data patterns observed."""
+        
+        print(f"Sending prompt to OpenAI: {prompt[:500]}...")
+        
+        client = openai.OpenAI()
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=2000
+        )
+        
+        schema = response.choices[0].message.content
+        print(f"Received response from OpenAI: {schema[:200]}...")
+        
+        # Validate and format JSON
+        try:
+            parsed_schema = json.loads(schema)
+            return json.dumps(parsed_schema, indent=2)
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error: {str(e)}")
+            # Try to extract JSON from the response
+            import re
+            json_match = re.search(r'\{.*\}', schema, re.DOTALL)
+            if json_match:
+                return json_match.group()
+            raise ValueError("Response is not valid JSON")
+        
+    except Exception as e:
+        print(f"Error in generate_schema_from_table: {str(e)}")
+        return None
+
 @app.route('/')
 def home():
     return render_template('home.html')
@@ -89,11 +224,6 @@ def scrape():
     driver = None
     try:
         driver = get_driver()
-        
-        # Set page load timeout
-        driver.set_page_load_timeout(30)
-        
-        # Navigate to URL
         driver.get(url)
         
         # Wait for page to load
@@ -112,120 +242,44 @@ def scrape():
         
         if not tables:
             return render_template('scrape.html', 
-                                     error="No tables found on the page")
+                                 error="No tables found on the page")
         
-        # Convert tables to DataFrames
+        # Store original table HTML and create previews
+        original_tables = {}
         table_previews = {}
+        
         for i, table in enumerate(tables):
             try:
+                # Store original HTML
+                original_tables[i] = str(table)
+                
+                # Create preview with Bootstrap table classes
                 df = html_table_to_dataframe(table)
                 if not df.empty:
-                    preview_df = df.head()
-                    table_previews[i] = preview_df.to_html(classes='table')
+                    table_previews[i] = df.to_html(
+                        classes='table table-striped table-bordered',
+                        index=False,
+                        escape=False
+                    )
             except Exception as table_error:
                 print(f"Error processing table {i}: {str(table_error)}")
                 continue
         
         if not table_previews:
-        # Wait for the actual page title to appear (indicating Cloudflare check is complete)
-          max_attempts = 3
-          current_attempt = 0
-        
-        while "Just a moment" in driver.title and current_attempt < max_attempts:
-            time.sleep(5)
-            current_attempt += 1
-        
-        # Get page source and verify content
-        page_source = driver.page_source
-        
-        # Debug the raw page source
-        source_preview = page_source[:1000]  # First 1000 characters
-        content_length = len(page_source)
-        
-        # Create soup with both parsers to compare
-        soup_lxml = BeautifulSoup(page_source, 'lxml')
-        soup_html = BeautifulSoup(page_source, 'html.parser')
-        
-        # Debug information
-        debug_info = [
-            f"Content length: {content_length} characters",
-            f"Source preview: {source_preview}",
-            f"URL being accessed: {url}",
-            f"Current page title: {driver.title}",
-        ]
-        
-        # Try different methods to find tables
-        direct_tables_lxml = soup_lxml.find_all('table')
-        direct_tables_html = soup_html.find_all('table')
-        
-        debug_info.extend([
-            f"Tables found with lxml: {len(direct_tables_lxml)}",
-            f"Tables found with html.parser: {len(direct_tables_html)}",
-        ])
-        
-        # Try to find any element to verify parsing is working
-        all_elements_lxml = soup_lxml.find_all()
-        all_elements_html = soup_html.find_all()
-        
-        debug_info.extend([
-            f"Total elements found with lxml: {len(all_elements_lxml)}",
-            f"Total elements found with html.parser: {len(all_elements_html)}",
-        ])
-        
-        # Try explicit XPath with Selenium
-        try:
-            table_elements = driver.find_elements("xpath", "//table")
-            debug_info.append(f"Tables found with Selenium XPath: {len(table_elements)}")
-        except Exception as xpath_error:
-            debug_info.append(f"XPath search error: {str(xpath_error)}")
-        
-        # Check if page is fully loaded
-        ready_state = driver.execute_script("return document.readyState")
-        debug_info.append(f"Page ready state: {ready_state}")
-        
-        # Try to get table directly with JavaScript
-        table_count_js = driver.execute_script("return document.getElementsByTagName('table').length")
-        debug_info.append(f"Tables found with JavaScript: {table_count_js}")
-        
-        # If we still haven't found any tables, return debug info
-        if not direct_tables_lxml and not direct_tables_html:
-            debug_str = "\n".join(debug_info)
             return render_template('scrape.html', 
-                                     error=f"No tables found. Debug info:\n{debug_str}")
-        
-        # Use whichever parser found tables
-        tables = direct_tables_lxml if direct_tables_lxml else direct_tables_html
-        
-        # Convert tables to DataFrames
-        table_previews = {}
-        for i, table in enumerate(tables):
-            try:
-                df = html_table_to_dataframe(table)
-                if not df.empty:
-                    preview_df = df.head()
-                    table_previews[i] = preview_df.to_html(classes='table')
-                    debug_info.append(f"Successfully processed table {i}")
-            except Exception as table_error:
-                debug_info.append(f"Error processing table {i}: {str(table_error)}")
-                continue
-        
-        if not table_previews:
-            debug_str = "\n".join(debug_info)
-            return render_template('scrape.html', 
-                                     error=f"Found tables but couldn't process them properly.\nDebug info:\n{debug_str}")
+                                 error="Found tables but couldn't process them properly.")
         
         return render_template('scrape.html', 
-                                 tables=table_previews, 
-                                 url=url)
+                             tables=table_previews,
+                             original_tables=original_tables,
+                             url=url)
                                  
     except Exception as e:
         return render_template('scrape.html', 
-                                 error=f"Error scraping URL: {str(e)}")
+                             error=f"Error scraping URL: {str(e)}")
     finally:
         if driver:
             driver.quit()
-    
-    return render_template('scrape.html')
 
 @app.route('/extract_table', methods=['POST'])
 def extract_table():
@@ -258,6 +312,60 @@ def extract_table():
     finally:
         if driver:
             driver.quit()
+
+@app.route('/generate_schema', methods=['POST'])
+def generate_schema():
+    try:
+        table_html = request.form.get('table_html')
+        if not table_html:
+            return jsonify({"error": "No table HTML provided"}), 400
+            
+        # Debug the received HTML
+        print("\n=== RECEIVED HTML ===")
+        print(table_html)
+        print("\n=== END RECEIVED HTML ===")
+        
+        # Clean and escape the HTML table string - use repr() to preserve all characters
+        cleaned_table_html = repr(table_html)[1:-1]  # Remove the outer quotes from repr()
+        
+        prompt = f"""Generate a Drupal 11 content type schema based on this HTML table.
+        Analyze this exact HTML table structure:
+
+{cleaned_table_html}
+
+Create a complete Drupal content type configuration that includes:
+1. Machine names for fields (lowercase with underscores)
+2. Appropriate field types (text, long text, integer, decimal, link, etc.)
+3. Required field settings
+4. Field widget settings
+5. Display settings
+
+Return the schema as valid JSON that could be used for content type configuration.
+Include field descriptions based on the data patterns observed."""
+        
+        # Debug the final prompt
+        print("\n=== FINAL PROMPT ===")
+        print(prompt)
+        print("\n=== END FINAL PROMPT ===")
+        
+        schema = generate_schema_from_table(table_html)
+        if not schema:
+            print("Failed to generate schema")  # Debug print
+            return render_template('scrape.html', 
+                                 error="Failed to generate schema. Please try again.")
+        
+        # Try to pretty print the JSON if possible
+        try:
+            parsed_schema = json.loads(schema)
+            pretty_schema = json.dumps(parsed_schema, indent=2)
+        except:
+            pretty_schema = schema
+        
+        return render_template('schema.html', schema=pretty_schema)
+    except Exception as e:
+        print(f"Error in generate_schema route: {str(e)}")  # Debug print
+        return render_template('scrape.html', 
+                             error=f"Error generating schema: {str(e)}")
 
 if __name__ == '__main__':
     app.run(debug=True) 
