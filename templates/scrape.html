@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Web Scraper</title>
+    <style>
+        .table-preview {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 10px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Web Page Table Scraper</h1>
+    
+    <form method="POST" action="{{ url_for('scrape') }}">
+        <label for="url">Enter URL to scrape:</label><br>
+        <input type="text" id="url" name="url" size="50" required><br>
+        <input type="submit" value="Scrape Tables">
+    </form>
+
+    {% if tables %}
+        <h2>Found Tables:</h2>
+        {% for index, table in tables.items() %}
+            <div class="table-preview">
+                <h3>Table {{ index }}</h3>
+                {{ table | safe }}
+                <form method="POST" action="{{ url_for('extract_table') }}">
+                    <input type="hidden" name="url" value="{{ url }}">
+                    <input type="hidden" name="table_index" value="{{ index }}">
+                    <input type="submit" value="Extract This Table">
+                </form>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+</body>
+</html> 
