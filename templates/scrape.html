@@ -1,54 +1,42 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Web Scraper</title>
-    <style>
-        .table-preview {
-            margin: 20px 0;
-            padding: 15px;
-            border: 1px solid #ddd;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 10px 0;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-    </style>
-</head>
-<body>
-    <h1>Web Page Table Scraper</h1>
-    
-    <form method="POST" action="{{ url_for('scrape') }}">
-        <label for="url">Enter URL to scrape:</label><br>
-        <input type="text" id="url" name="url" size="50" required><br>
-        <input type="submit" value="Scrape Tables">
-    </form>
+{% extends "base.html" %}
 
-    {% if tables %}
-        <h2>Found Tables:</h2>
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <h2 class="mb-4">Web Table Scraper</h2>
+        
+        <form method="post" action="{{ url_for('scrape') }}" class="mb-4">
+            <div class="mb-3">
+                <label for="url" class="form-label">Enter URL:</label>
+                <input type="url" class="form-control" id="url" name="url" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Scrape Tables</button>
+        </form>
+
+        {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        {% if tables %}
+        <h3 class="mb-3">Found Tables:</h3>
         {% for index, table in tables.items() %}
-            <div class="table-preview">
-                <h3>Table {{ index }}</h3>
-                {{ table | safe }}
-                <form method="POST" action="{{ url_for('extract_table') }}">
+        <div class="card mb-4">
+            <div class="card-header">
+                Table {{ index }}
+                <form method="post" action="{{ url_for('extract_table') }}" class="float-end">
                     <input type="hidden" name="url" value="{{ url }}">
                     <input type="hidden" name="table_index" value="{{ index }}">
-                    <input type="submit" value="Extract This Table">
+                    <button type="submit" class="btn btn-sm btn-success">Download CSV</button>
                 </form>
             </div>
+            <div class="card-body">
+                {{ table | safe }}
+            </div>
+        </div>
         {% endfor %}
-    {% endif %}
-
-    {% if error %}
-        <p style="color: red;">{{ error }}</p>
-    {% endif %}
-</body>
-</html> 
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 
