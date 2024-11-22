@@ -5,6 +5,8 @@ It allows you to select the table and the columns you want to extract.
 Once selected, it will display the data in a table for you to review.
 You can then save the data to a csv file.
 
+NOTE: this is a work in progress and not all functionality is available yet. 
+
 
 ## Setup
 
@@ -14,7 +16,13 @@ You can then save the data to a csv file.
 pip install -r requirements.txt
 ```
 
-2. Run the app:
+2. Set up OpenAI API key in a `.env` file:
+
+```bash
+OPENAI_API_KEY=<your-openai-api-key>
+```
+
+3. Run the app:
 
 ```bash
 python app.py
