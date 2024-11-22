@@ -32,7 +32,7 @@
                         <button type="submit" class="btn btn-sm btn-success">Download CSV</button>
                     </form>
                     <form method="post" action="{{ url_for('generate_schema') }}" class="d-inline">
-                        <input type="hidden" name="table_html" value="{{ original_tables[index] | safe }}">
+                        <input type="hidden" name="table_html" value="{{ original_tables[index] | replace('"', '&quot;') | safe }}">
                         <button type="submit" class="btn btn-sm btn-primary">Generate Schema</button>
                     </form>
                 </div>
