@@ -2,46 +2,35 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-md-8 offset-md-2">
-        <h2 class="mb-4">Web Table Scraper</h2>
-        
-        <form method="post" action="{{ url_for('scrape') }}" class="mb-4">
-            <div class="mb-3">
-                <label for="url" class="form-label">Enter URL:</label>
-                <input type="url" class="form-control" id="url" name="url" required>
+    <div class="col-md-12">
+        <form method="POST" action="{{ url_for('scrape') }}" class="mb-4">
+            <div class="input-group">
+                <input type="url" name="url" class="form-control" placeholder="Enter URL" required>
+                <div class="input-group-append">
+                    <button type="submit" class="btn btn-primary">Scrape Tables</button>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary">Scrape Tables</button>
         </form>
 
         {% if error %}
-        <div class="alert alert-danger">
-            {{ error }}
-        </div>
+        <div class="alert alert-danger">{{ error }}</div>
         {% endif %}
 
         {% if tables %}
-        <h3 class="mb-3">Found Tables:</h3>
-        {% for index, table in tables.items() %}
-        <div class="card mb-4">
-            <div class="card-header">
-                Table {{ index }}
-                <div class="float-end">
-                    <form method="post" action="{{ url_for('extract_table') }}" class="d-inline">
-                        <input type="hidden" name="url" value="{{ url }}">
-                        <input type="hidden" name="table_index" value="{{ index }}">
-                        <button type="submit" class="btn btn-sm btn-success">Download CSV</button>
-                    </form>
-                    <form method="post" action="{{ url_for('generate_schema') }}" class="d-inline">
-                        <input type="hidden" name="table_html" value="{{ original_tables[index] | replace('"', '&quot;') | safe }}">
+            {% for index, table in tables.items() %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    Table {{ index + 1 }}
+                    <form action="{{ url_for('generate_schema') }}" method="POST" class="float-right">
+                        <input type="hidden" name="table_html" value="{{ original_tables[index] }}">
                         <button type="submit" class="btn btn-sm btn-primary">Generate Schema</button>
                     </form>
                 </div>
+                <div class="card-body">
+                    {{ table | safe }}
+                </div>
             </div>
-            <div class="card-body">
-                {{ table | safe }}
-            </div>
-        </div>
-        {% endfor %}
+            {% endfor %}
         {% endif %}
     </div>
 </div>

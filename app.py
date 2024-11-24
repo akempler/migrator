@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import pandas as pd
 from bs4 import BeautifulSoup
 import time
@@ -21,6 +21,8 @@ load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
 if not openai.api_key:
     raise ValueError("No OpenAI API key found. Please set OPENAI_API_KEY in your .env file.")
+
+app.secret_key = 'your-secret-key-here'  # Replace with a secure secret key
 
 def get_driver():
     try:
@@ -214,12 +216,15 @@ def generate_schema_from_table(table_html):
 def home():
     return render_template('home.html')
 
-@app.route('/scrape', methods=['GET'])
+@app.route('/dashboard', methods=['GET'])
 def scrape_form():
-    return render_template('scrape.html')
+    return render_template('dashboard.html')
 
 @app.route('/scrape', methods=['POST'])
 def scrape():
+    # Clear previous session data when starting a new scrape
+    session.clear()
+    
     url = request.form['url']
     driver = None
     try:
@@ -269,6 +274,10 @@ def scrape():
             return render_template('scrape.html', 
                                  error="Found tables but couldn't process them properly.")
         
+        if table_previews:
+            session['current_table'] = True  # Changed from has_table
+            session['current_schema'] = False  # Explicitly set schema to False
+        
         return render_template('scrape.html', 
                              tables=table_previews,
                              original_tables=original_tables,
@@ -313,23 +322,28 @@ def extract_table():
         if driver:
             driver.quit()
 
-@app.route('/generate_schema', methods=['POST'])
+@app.route('/generate_schema', methods=['GET', 'POST'])
 def generate_schema():
+    # Check if we have a table selected
+    if not session.get('current_table'):
+        return redirect(url_for('scrape_form'))
+        
     try:
-        table_html = request.form.get('table_html')
-        if not table_html:
-            return jsonify({"error": "No table HTML provided"}), 400
-        
-        # Debug the received HTML
-        print("\n=== RECEIVED HTML ===")
-        print(table_html)
-        print("\n=== END RECEIVED HTML ===")
-        
-        # Clean and escape the HTML table string - use repr() to preserve all characters
-        cleaned_table_html = repr(table_html)[1:-1]  # Remove the outer quotes from repr()
-        
-        prompt = f"""Generate a Drupal 11 content type schema based on this HTML table.
-        Analyze this exact HTML table structure:
+        if request.method == 'POST':
+            table_html = request.form.get('table_html')
+            if not table_html:
+                return jsonify({"error": "No table HTML provided"}), 400
+            
+            # Debug the received HTML
+            print("\n=== RECEIVED HTML ===")
+            print(table_html)
+            print("\n=== END RECEIVED HTML ===")
+            
+            # Clean and escape the HTML table string - use repr() to preserve all characters
+            cleaned_table_html = repr(table_html)[1:-1]  # Remove the outer quotes from repr()
+            
+            prompt = f"""Generate a Drupal 11 content type schema based on this HTML table.
+            Analyze this exact HTML table structure:
 
 {cleaned_table_html}
 
@@ -342,28 +356,35 @@ Create a complete Drupal content type configuration that includes:
 
 Return the schema as valid JSON that could be used for content type configuration.
 Include field descriptions based on the data patterns observed."""
-        
-        # Debug the final prompt
-        print("\n=== FINAL PROMPT ===")
-        print(prompt)
-        print("\n=== END FINAL PROMPT ===")
-        
-        schema = generate_schema_from_table(table_html)
-        if not schema:
-            print("Failed to generate schema")  # Debug print
-            return render_template('scrape.html', 
-                                 error="Failed to generate schema. Please try again.")
-        
-        # Try to pretty print the JSON if possible
-        try:
-            parsed_schema = json.loads(schema)
-            pretty_schema = json.dumps(parsed_schema, indent=2)
-        except:
-            pretty_schema = schema
-        
-        return render_template('schema.html', 
-                             schema=pretty_schema, 
-                             table_html=table_html)
+            
+            # Debug the final prompt
+            print("\n=== FINAL PROMPT ===")
+            print(prompt)
+            print("\n=== END FINAL PROMPT ===")
+            
+            schema = generate_schema_from_table(table_html)
+            if not schema:
+                print("Failed to generate schema")  # Debug print
+                return render_template('scrape.html', 
+                                     error="Failed to generate schema. Please try again.")
+            
+            # Try to pretty print the JSON if possible
+            try:
+                parsed_schema = json.loads(schema)
+                pretty_schema = json.dumps(parsed_schema, indent=2)
+            except:
+                pretty_schema = schema
+            
+            if schema:
+                session['current_schema'] = True
+                
+            return render_template('schema.html', 
+                                 schema=pretty_schema, 
+                                 table_html=table_html)
+        else:
+            # GET request - only allow if we have a table
+            return redirect(url_for('scrape_form'))
+            
     except Exception as e:
         print(f"Error in generate_schema route: {str(e)}")
         return render_template('scrape.html', 
