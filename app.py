@@ -216,9 +216,14 @@ def generate_schema_from_table(table_html):
 def home():
     return render_template('home.html')
 
-@app.route('/dashboard', methods=['GET'])
-def scrape_form():
+@app.route('/dashboard')
+def dashboard():
     return render_template('dashboard.html')
+
+@app.route('/scrape', methods=['GET'])
+def scrape_form():
+    url = request.args.get('url', '')  # Get URL from query parameters
+    return render_template('scrape.html', url=url)
 
 @app.route('/scrape', methods=['POST'])
 def scrape():
@@ -226,6 +231,9 @@ def scrape():
     session.clear()
     
     url = request.form['url']
+    # Store URL in session for potential re-use
+    session['last_url'] = url
+    
     driver = None
     try:
         driver = get_driver()
