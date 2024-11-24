@@ -122,9 +122,9 @@ document.addEventListener('DOMContentLoaded', function() {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Show the schema spinner
-            const spinner = document.getElementById('schemaSpinner');
-            spinner.style.display = 'block';
+            // Show the overlay and spinner
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('scrapingSpinner').style.display = 'block';
             
             // Disable all Generate Schema buttons
             const buttons = document.querySelectorAll('.generate-schema-btn');
@@ -159,8 +159,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     btn.innerHTML = 'Generate Schema';
                 });
                 
-                // Hide the spinner
-                spinner.style.display = 'none';
+                // Hide the overlay and spinner
+                document.getElementById('overlay').style.display = 'none';
+                document.getElementById('scrapingSpinner').style.display = 'none';
             });
         });
     });

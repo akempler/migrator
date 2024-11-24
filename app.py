@@ -188,7 +188,7 @@ def generate_schema_from_table(table_html):
             messages=[
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.7,
+            temperature=0.5,
             max_tokens=2000
         )
         
