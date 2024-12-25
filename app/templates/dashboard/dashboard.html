@@ -3,7 +3,7 @@
 {% block content %}
 <div class="row">
     <div class="col-md-12">
-        <form method="POST" action="{{ url_for('scrape') }}" class="mb-4" id="scrapeForm">
+        <form method="POST" action="{{ url_for('scrape.scrape') }}" class="mb-4" id="scrapeForm">
             <div class="input-group">
                 <input type="url" name="url" class="form-control" placeholder="Enter URL" required id="urlInput">
                 <div class="input-group-append">
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData();
             formData.append('url', url);
             
-            fetch("{{ url_for('scrape') }}", {
+            fetch("{{ url_for('scrape.scrape') }}", {
                 method: 'POST',
                 body: formData
             })
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     eval(script.innerHTML);
                 }
                 // Update the URL without reloading the page
-                history.pushState({}, '', "{{ url_for('scrape_form') }}");
+                history.pushState({}, '', "{{ url_for('scrape.scrape_form') }}");
             })
             .catch(error => {
                 console.error('Error:', error);
