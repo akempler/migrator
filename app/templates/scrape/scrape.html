@@ -11,7 +11,7 @@
             <p class="mt-2">Generating Schema...</p>
         </div>
 
-        <form method="POST" action="{{ url_for('scrape') }}" class="mb-4" id="scrapeForm">
+        <form method="POST" action="{{ url_for('scrape.scrape') }}" class="mb-4" id="scrapeForm">
             <div class="input-group">
                 <input type="url" name="url" class="form-control" placeholder="Enter URL" required 
                        value="{{ url or session.get('last_url', '') }}" id="urlInput">
