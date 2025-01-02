@@ -19,6 +19,7 @@
       </div>
 
       {% if tables %}
+        <div id="tablesContainer">
             {% for index, table in tables.items() %}
             <div class="card mb-4">
                 <div class="card-header">
@@ -38,42 +39,9 @@
             <div class="mt-4">
                 <button onclick="newScrape()" class="btn btn-primary">New Scrape</button>
             </div>
+        </div>
       {% endif %}
     </div>
 </div>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('scrapingSpinner').style.display = 'block';
-
-    const url = url;
-
-    fetch("{{ url_for('scrape.scrape') }}", {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.text())
-    .then(html => {
-        // Replace the current page content with the new HTML
-        document.documentElement.innerHTML = html;
-        // Re-run scripts since we replaced the entire content
-        const scripts = document.getElementsByTagName('script');
-        for (let script of scripts) {
-            eval(script.innerHTML);
-        }
-        // Update the URL without reloading the page
-        history.pushState({}, '', "{{ url_for('scrape.scrape_form') }}");
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error occurred while scraping');
-        // Reset the button state
-        submitButton.disabled = false;
-        submitButton.innerHTML = 'Scrape Tables';
-        // Hide the spinner
-        document.getElementById('scrapingSpinner').style.display = 'none';
-    });
-  });
-</script>
 
 {% endblock %} 
