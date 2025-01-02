@@ -45,11 +45,11 @@
     <!-- Content Container -->
     <div class="container mt-4">
         <!-- Sub-navigation Tabs - Only show on specific routes -->
-        {% if request.endpoint in ['scrape', 'generate_schema', 'extract_content'] %}
+        {# {% if request.endpoint in ['scrape', 'generate_schema', 'extract_content'] %}
         <ul class="nav nav-tabs mb-4">
             <li class="nav-item">
-                <a class="nav-link {{ 'active' if request.endpoint == 'scrape' }}" 
-                   href="{{ url_for('scrape_form') }}">Scrape</a>
+                <a class="nav-link {{ 'active' if request.endpoint == 'scrape.scrape_form' }}" 
+                   href="{{ url_for('scrape.scrape_form') }}">Scrape</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ 'active' if request.endpoint == 'generate_schema' }} {{ 'disabled' if not session.get('current_schema') }}" 
@@ -62,7 +62,7 @@
                    onclick="return false;">Extract</a>
             </li>
         </ul>
-        {% endif %}
+        {% endif %} #}
         
         {% block content %}{% endblock %}
     </div>
