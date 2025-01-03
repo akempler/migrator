@@ -83,8 +83,9 @@ def scrape_webpage():
                                  error="Found tables but couldn't process them properly.")
         
         if table_previews:
-            session['current_table'] = True  # Changed from has_table
+            session['current_table'] = True
             session['current_schema'] = False  # Explicitly set schema to False
+            session['original_tables'] = original_tables
         
         return render_template('scrape/scrape_webpage.html', 
                              tables=table_previews,
@@ -100,6 +101,26 @@ def scrape_webpage():
 
     # Scrape the webpage
     # return render_template('scrape/scrape_webpage.html', url=url)
+
+
+@bp.route('/table_to_csv', methods=['POST'])
+def table_to_csv():
+    table_index = int(request.form['table_index'])
+    table_html = request.form['table_html']
+    
+    try:
+        # Parse the HTML string with BeautifulSoup first
+        soup = BeautifulSoup(table_html, 'html.parser')
+        selected_table = html_table_to_dataframe(soup)
+        
+        # Convert to CSV and send as download
+        return selected_table.to_csv(index=False), {
+            'Content-Type': 'text/csv',
+            'Content-Disposition': f'attachment; filename=table_{table_index}.csv'
+        }
+    except Exception as e:
+        return render_template('scrape/scrape_webpage.html', 
+                             error=f"Error extracting table: {str(e)}")
 
 
 def get_driver():

@@ -4,7 +4,9 @@
 <div class="row">
     <div class="col-md-12">
       <h1>Scrape Results</h1>
-      url: {{ url }}
+      <p>
+        <strong>url:</strong> {{ url }}
+      </p>
 
       {% if error %}
         <div class="alert alert-danger">{{ error }}</div>
@@ -26,7 +28,12 @@
                     Table {{ index + 1 }}
                     <form action="{{ url_for('main.about') }}" method="POST" class="float-right schema-form">
                         <input type="hidden" name="table_html" value="{{ original_tables[index] }}">
-                        <button type="submit" class="btn btn-sm btn-primary generate-schema-btn">Generate Schema</button>
+                        <button type="submit" class="btn btn-sm btn-secondary generate-schema-btn">Generate Schema</button>
+                    </form>
+                    <form action="{{ url_for('scrape.table_to_csv') }}" method="POST" class="float-right schema-form mr-2">
+                      <input type="hidden" name="table_html" value="{{ original_tables[index] }}">
+                      <input type="hidden" name="table_index" value="{{ index }}">
+                      <button type="submit" class="btn btn-sm btn-primary generate-schema-btn">Download CSV</button>
                     </form>
                 </div>
                 <div class="card-body">
@@ -35,10 +42,6 @@
             </div>
             {% endfor %}
 
-            <!-- New Scrape button -->
-            <div class="mt-4">
-                <button onclick="newScrape()" class="btn btn-primary">New Scrape</button>
-            </div>
         </div>
       {% endif %}
     </div>

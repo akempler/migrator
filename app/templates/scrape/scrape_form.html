@@ -6,7 +6,7 @@
         <h1>Create a new scrape</h1>
         <p>Enter the URL of the website you want to scrape.</p>
         <form method="POST" action="{{ url_for('scrape.scrape_webpage') }}" class="mb-4" id="scrapeForm">
-            <label for="urlInput">URL!</label>
+            <label for="urlInput">URL to scrape</label>
             <div class="input-group">
                 <input type="url" name="url" class="form-control" placeholder="Enter URL" required id="urlInput">
                 <div class="input-group-append">
