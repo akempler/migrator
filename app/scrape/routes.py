@@ -39,10 +39,16 @@ def scrape_webpage():
         driver = get_driver()
         driver.get(url)
         
-        # Wait for page to load
-        WebDriverWait(driver, 20).until(
+        # Wait longer for Cloudflare to clear and page to load
+        time.sleep(5)  # Add initial wait for Cloudflare
+        
+        # Wait for body to be present
+        WebDriverWait(driver, 30).until(
             EC.presence_of_element_located((By.TAG_NAME, "body"))
         )
+        
+        # Additional wait for any dynamic content
+        time.sleep(2)
         
         # Get page source after JavaScript execution
         page_source = driver.execute_script("return document.documentElement.outerHTML")
@@ -126,19 +132,36 @@ def table_to_csv():
 def get_driver():
     try:
         options = uc.ChromeOptions()
-        options.add_argument('--headless=new')  # Updated headless argument
+        
+        # Add additional arguments to better mimic a real browser
+        options.add_argument('--disable-blink-features=AutomationControlled')
+        options.add_argument('--disable-extensions')
+        options.add_argument('--disable-infobars')
+        options.add_argument('--disable-popup-blocking')
+        options.add_argument('--start-maximized')
+        
+        # Add random user agent
+        options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36')
+        
+        # Keep the necessary arguments
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
-        options.add_argument('--disable-gpu')
-        options.add_argument('--window-size=1920,1080')
+        options.add_argument('--headless=new')
         
-        # Create driver with version 131 to match your Chrome version
+        # Initialize the driver with additional configurations
         driver = uc.Chrome(
             options=options,
-            version_main=131,  # Updated to match your Chrome version
-            driver_executable_path=None,
-            browser_executable_path=None,
+            version_main=131,
+            use_subprocess=True,  # This can help with detection evasion
+            delay=2  # Add a small delay to seem more human-like
         )
+        
+        # Set page load timeout
+        driver.set_page_load_timeout(30)
+        
+        # Add additional properties to make detection harder
+        driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        
         return driver
     except Exception as e:
         print(f"Error creating driver: {str(e)}")
