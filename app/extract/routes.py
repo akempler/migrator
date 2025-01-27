@@ -1,20 +1,6 @@
 from flask import render_template, request, jsonify, session, redirect, url_for
 from app.extract import bp
-import time
-import lxml
-import openai
-import json
-import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
-
-# Set your OpenAI API key
-openai.api_key = os.getenv('OPENAI_API_KEY')
-if not openai.api_key:
-    raise ValueError("No OpenAI API key found. Please set OPENAI_API_KEY in your .env file.")
-
+from app.utils import openai, load_dotenv
 
 @bp.route('/extract_content', methods=['POST'])
 def extract_content():
