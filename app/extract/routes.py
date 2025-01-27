@@ -1,8 +1,8 @@
 from flask import render_template, request, jsonify, session, redirect, url_for
-from app.extract import bp
+from app.extract import extract_bp
 from app.utils import openai, load_dotenv
 
-@bp.route('/extract_content', methods=['POST'])
+@extract_bp.route('/extract_content', methods=['POST'])
 def extract_content():
     try:
         schema = request.form.get('schema')

@@ -1,6 +1,6 @@
 from flask import render_template
-from app.dashboard import bp
+from app.dashboard import dashboard_bp
 
-@bp.route('/dashboard')
+@dashboard_bp.route('/dashboard')
 def dashboard():
     return render_template('dashboard/dashboard.html')

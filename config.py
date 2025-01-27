@@ -5,6 +5,8 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///app.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+    OLLAMA_API_KEY = os.environ.get('OLLAMA_API_KEY')
+    OLLAMA_API_URL = os.environ.get('OLLAMA_API_URL')
     FLASK_ENV = os.environ.get('FLASK_ENV') or 'development'
     DEBUG = os.environ.get('FLASK_DEBUG') or True
     TESTING = os.environ.get('TESTING') or False

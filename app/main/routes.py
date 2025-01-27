@@ -1,10 +1,10 @@
 from flask import render_template
-from app.main import bp
+from app.main import main_bp
 
-@bp.route('/')
+@main_bp.route('/')
 def index():
     return render_template('main/home.html')
 
-@bp.route('/about')
+@main_bp.route('/about')
 def about():
     return render_template('main/about.html') 

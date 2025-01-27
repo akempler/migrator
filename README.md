@@ -21,6 +21,11 @@ pip install -r requirements.txt
 ```bash
 OPENAI_API_KEY=<your-openai-api-key>
 ```
+Or to use ollama locally:
+```bash
+OLLAMA_API_KEY=<your-ollama-api-key>
+OLLAMA_API_URL=<your-ollama-api-url>
+```
 
 3. Run the app:
 

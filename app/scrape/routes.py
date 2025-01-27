@@ -1,5 +1,5 @@
 from flask import render_template, request, jsonify, session, redirect, url_for
-from app.scrape import bp
+from app.scrape import scrape_bp
 import pandas as pd
 from bs4 import BeautifulSoup
 import time
@@ -14,16 +14,16 @@ import os
 from dotenv import load_dotenv
 
 
-@bp.route('/scrape_form', methods=['GET', 'POST'])
+@scrape_bp.route('/scrape_form', methods=['GET', 'POST'])
 def scrape_form():
     return render_template('scrape/scrape_form.html')
 
-@bp.route('/scrape', methods=['POST'])
+@scrape_bp.route('/scrape', methods=['POST'])
 def scrape():
     url = request.args.get('url', '')  # Get URL from query parameters
     return render_template('scrape/scrape.html', url=url)
 
-@bp.route('/scrape_webpage', methods=['POST'])
+@scrape_bp.route('/scrape_webpage', methods=['POST'])
 def scrape_webpage():
     url = request.form['url']
     session['last_url'] = url
@@ -109,7 +109,7 @@ def scrape_webpage():
     # return render_template('scrape/scrape_webpage.html', url=url)
 
 
-@bp.route('/table_to_csv', methods=['POST'])
+@scrape_bp.route('/table_to_csv', methods=['POST'])
 def table_to_csv():
     table_index = int(request.form['table_index'])
     table_html = request.form['table_html']

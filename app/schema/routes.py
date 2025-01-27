@@ -1,5 +1,5 @@
 from flask import render_template, request, jsonify, session, redirect, url_for
-from app.schema import bp
+from app.schema import schema_bp
 from app.utils import openai, load_dotenv
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -135,7 +135,7 @@ Return the schema as valid JSON that could be used for content type configuratio
         return None
 
 
-@bp.route('/generate_schema', methods=['GET', 'POST'])
+@schema_bp.route('/generate_schema', methods=['GET', 'POST'])
 def generate_schema():
     # Check if we have a table selected
     if not session.get('current_table'):
