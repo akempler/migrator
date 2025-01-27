@@ -1,5 +1,6 @@
 from flask import render_template, request, jsonify, session, redirect, url_for
 from app.schema import bp
+from app.utils import openai, load_dotenv
 import pandas as pd
 from bs4 import BeautifulSoup
 import time
@@ -8,19 +9,7 @@ import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import openai
 import json
-import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
-
-# Set your OpenAI API key
-openai.api_key = os.getenv('OPENAI_API_KEY')
-if not openai.api_key:
-    raise ValueError("No OpenAI API key found. Please set OPENAI_API_KEY in your .env file.")
-
 
 def generate_schema_from_table(table_html):
     try:

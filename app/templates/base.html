@@ -45,7 +45,7 @@
     <!-- Content Container -->
     <div class="container mt-4">
         <!-- Sub-navigation Tabs - Only show on specific routes -->
-        {# {% if request.endpoint in ['scrape', 'generate_schema', 'extract_content'] %}
+        {% if request.endpoint in ['scrape.scrape_form', 'generate_schema', 'extract_content'] %}
         <ul class="nav nav-tabs mb-4">
             <li class="nav-item">
                 <a class="nav-link {{ 'active' if request.endpoint == 'scrape.scrape_form' }}" 
@@ -62,7 +62,7 @@
                    onclick="return false;">Extract</a>
             </li>
         </ul>
-        {% endif %} #}
+        {% endif %}
         
         {% block content %}{% endblock %}
     </div>
@@ -71,4 +71,4 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
-</html> 
+</html>

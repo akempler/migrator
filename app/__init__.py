@@ -5,20 +5,19 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # Register blueprints
-    from app.main import bp as main_bp
-    app.register_blueprint(main_bp)
+    # List of blueprint modules to register
+    blueprint_modules = [
+        ('app.main', 'main_bp', None),
+        ('app.dashboard', 'dashboard_bp', '/dashboard'),
+        ('app.scrape', 'scrape_bp', '/scrape'),
+        ('app.schema', 'schema_bp', '/schema'),
+        ('app.extract', 'extract_bp', '/extract')
+    ]
 
-    from app.dashboard import bp as dashboard_bp
-    app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
+    # Dynamically register blueprints
+    for module_name, bp_name, url_prefix in blueprint_modules:
+        module = __import__(module_name, fromlist=[bp_name])
+        bp = getattr(module, bp_name)
+        app.register_blueprint(bp, url_prefix=url_prefix)
 
-    from app.scrape import bp as scrape_bp
-    app.register_blueprint(scrape_bp, url_prefix='/scrape')
-    
-    from app.schema import bp as schema_bp
-    app.register_blueprint(schema_bp, url_prefix='/schema')
-    
-    from app.extract import bp as extract_bp
-    app.register_blueprint(extract_bp, url_prefix='/extract')
-
-    return app 
+    return app
