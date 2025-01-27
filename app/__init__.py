@@ -17,8 +17,8 @@ def create_app(config_class=Config):
     
     from app.schema import bp as schema_bp
     app.register_blueprint(schema_bp, url_prefix='/schema')
-
-    # from app.migration import bp as migration_bp
-    # app.register_blueprint(migration_bp, url_prefix='/migration')
+    
+    from app.extract import bp as extract_bp
+    app.register_blueprint(extract_bp, url_prefix='/extract')
 
     return app 

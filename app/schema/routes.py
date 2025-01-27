@@ -99,18 +99,18 @@ def generate_schema_from_table(table_html):
         
         prompt = f"""Generate a Drupal 11 content type schema based on this HTML table:
 
-        ```html
-        {cleaned_table_html}
-        ```
+```html
+{cleaned_table_html}
+```
 
-        Create a complete Drupal content type configuration that includes:
-        1. Machine names for fields (lowercase with underscores)
-        2. Appropriate field types (text, long text, integer, decimal, link, etc.)
-        3. Required field settings
-        4. Field widget settings
-        5. Display settings
+Create a complete Drupal content type configuration that includes:
+1. Machine names for fields (lowercase with underscores)
+2. Appropriate field types (text, long text, integer, decimal, link, etc.)
+3. Required field settings
+4. Field widget settings
+5. Display settings
 
-        Return the schema as valid JSON that could be used for content type configuration.
+Return the schema as valid JSON that could be used for content type configuration.
         Include field descriptions based on the data patterns observed."""
         
         print(f"Sending prompt to OpenAI: {prompt[:500]}...")

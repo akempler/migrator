@@ -16,7 +16,7 @@
         </div>
         
         <div class="mt-4">
-            <form action="{{ url_for('main.about') }}" method="POST">
+            <form action="{{ url_for('extract.extract_content') }}" method="POST">
                 <input type="hidden" name="schema" value="{{ schema }}">
                 <input type="hidden" name="table_html" value="{{ table_html }}">
                 <button type="submit" class="btn btn-success">Extract Content</button>
