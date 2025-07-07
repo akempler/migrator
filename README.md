@@ -30,5 +30,5 @@ OLLAMA_API_URL=<your-ollama-api-url>
 3. Run the app:
 
 ```bash
-python app.py
+python run.py
 ```
