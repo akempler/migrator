@@ -32,3 +32,7 @@ OLLAMA_API_URL=<your-ollama-api-url>
 ```bash
 python run.py
 ```
+
+## TODO
+
+- [ ] Update the frontend to leverage Next.js for improved performance and modern React features
